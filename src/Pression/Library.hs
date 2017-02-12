@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell, QuasiQuotes, ViewPatterns #-}
 module Pression.Library
   ( gamesIds, GameId(..)
   ) where
@@ -7,7 +8,7 @@ import Data.Maybe
 import Pression.Config
 import System.Directory
 import System.FilePath
-import Text.Regex.TDFA
+import Text.Regex.PCRE.Rex (rex)
 
 -- data Game = Game
 --   { steamId :: Integer
@@ -25,9 +26,7 @@ gamesIds = do
 gamesIdsInPath :: FilePath -> IO [GameId]
 gamesIdsInPath path = do
   content <- listDirectory path
-  return $ mapMaybe getManifestId content
+  return $ mapMaybe matchManifest content
 
-getManifestId :: String -> Maybe GameId
-getManifestId file = do
-  result <- file =~~ "appmanifest_([0-9]+).acf"
-  return $ GameId $ read (mrSubs result ! 1)
+matchManifest :: String -> Maybe GameId
+matchManifest = [rex|^appmanifest_(?{ GameId . read }[0-9]+).acf$|]

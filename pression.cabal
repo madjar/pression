@@ -21,7 +21,7 @@ library
                      , Pression.RunRandom
   build-depends:       base >= 4.7 && < 5
                      , directory
-                     , regex-tdfa
+                     , rex
                      , array
                      , trifecta
                      , insert-ordered-containers
