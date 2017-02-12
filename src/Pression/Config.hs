@@ -2,24 +2,27 @@
 
 module Pression.Config where
 
-import Control.Lens
-import Data.Maybe
-import Data.Tagged
+import           Pression.Parser
+
+import           Control.Lens
+import           Data.Maybe (fromJust)
+import           Data.Tagged
 import qualified Data.Text as T
-import Pression.Parser
-import Text.Trifecta
-import System.Directory
-import System.FilePath.Posix
-import System.IO.Unsafe
-import System.Info.Extra
+import           System.Directory (getHomeDirectory)
+import           System.FilePath ((</>))
+import           System.IO.Unsafe (unsafePerformIO)
+import           System.Info.Extra (isWindows)
+import           Text.Trifecta
 
 data ConfigVdf
 
 getSteamDir :: IO String
-getSteamDir = if isWindows
-                then return "C:\\Program Files (x86)\\Steam"
-                else do home <- getHomeDirectory
-                        return (home </> ".steam/steam")
+getSteamDir =
+    if isWindows
+        then return "C:\\Program Files (x86)\\Steam"
+        else do
+            home <- getHomeDirectory
+            return (home </> ".steam/steam")
 
 steamDir :: String
 steamDir = unsafePerformIO getSteamDir

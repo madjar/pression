@@ -1,32 +1,39 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, ViewPatterns #-}
 module Pression.Library
-  ( gamesIds, GameId(..)
+  ( gamesIds, GameId(..), runGame, randomGame
   ) where
 
-import Data.Array ((!))
-import Data.Maybe
 import Pression.Config
-import System.Directory
-import System.FilePath
-import Text.Regex.PCRE.Rex (rex)
 
--- data Game = Game
---   { steamId :: Integer
---   } deriving (Show)
+import Control.Monad.Random (uniform)
+import Data.Array ((!))
+import Data.Maybe (mapMaybe)
+import System.Directory (listDirectory)
+import System.FilePath ((</>))
+import System.Info.Extra (isWindows)
+import System.Process (callCommand)
+import Text.Regex.PCRE.Rex (rex)
 
 newtype GameId = GameId Integer deriving Show
 
 gamesIds :: IO [GameId]
 gamesIds = do
-  config <- getConfig
-  let base = steamDir </> "steamapps"
-      folders = base : configInstallFolders config
-  concat <$> traverse gamesIdsInPath folders
+    config <- getConfig
+    let base = steamDir </> "steamapps"
+        folders = base : configInstallFolders config
+    concat <$> traverse gamesIdsInPath folders
+  where
+    gamesIdsInPath path = mapMaybe matchManifest <$> listDirectory path
+    matchManifest = [rex|^appmanifest_(?{ GameId . read }[0-9]+).acf$|]
 
-gamesIdsInPath :: FilePath -> IO [GameId]
-gamesIdsInPath path = do
-  content <- listDirectory path
-  return $ mapMaybe matchManifest content
+randomGame :: IO GameId
+randomGame = uniform =<< gamesIds
 
-matchManifest :: String -> Maybe GameId
-matchManifest = [rex|^appmanifest_(?{ GameId . read }[0-9]+).acf$|]
+runGame :: GameId -> IO ()
+runGame (GameId gid) =
+    callCommand $ runcmd ++ " steam://nav/games/details/" ++ show gid
+  where
+    runcmd =
+        if isWindows
+            then "open"
+            else "steam"

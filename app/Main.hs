@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module Main where
 
-import Pression.RunRandom
+import Pression.Library
 
 main :: IO ()
-main = runRandom
+main = randomGame >>= runGame
