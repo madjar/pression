@@ -11,18 +11,20 @@ import qualified Data.Text as T
 import           System.Directory (getHomeDirectory)
 import           System.FilePath ((</>))
 import           System.IO.Unsafe (unsafePerformIO)
-import           System.Info.Extra (isWindows)
+import           System.Info.Extra (isWindows, isMac)
 import           Text.Trifecta
 
 data ConfigVdf
 
 getSteamDir :: IO String
-getSteamDir =
-    if isWindows
-        then return "C:\\Program Files (x86)\\Steam"
-        else do
-            home <- getHomeDirectory
-            return (home </> ".steam/steam")
+getSteamDir
+  | isWindows = return "C:\\Program Files (x86)\\Steam"
+  | isMac = do
+    home <- getHomeDirectory
+    return (home </> "Library/Application Support/Steam")
+  | otherwise = do
+    home <- getHomeDirectory
+    return (home </> ".steam/steam")
 
 steamDir :: String
 steamDir = unsafePerformIO getSteamDir
