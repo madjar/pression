@@ -3,6 +3,7 @@ module Pression.Library
   ( gamesIds, GameId(..), runGame, randomGame
   ) where
 
+import Pression.Types
 import Pression.Config
 
 import Control.Monad.Random (uniform)
@@ -13,8 +14,6 @@ import System.FilePath ((</>))
 import System.Info.Extra (isWindows)
 import System.Process (callCommand)
 import Text.Regex.PCRE.Rex (rex)
-
-newtype GameId = GameId Integer deriving Show
 
 gamesIds :: IO [GameId]
 gamesIds = do
@@ -31,7 +30,7 @@ randomGame = uniform =<< gamesIds
 
 runGame :: GameId -> IO ()
 runGame (GameId gid) =
-    callCommand $ runcmd ++ " steam://nav/games/details/" ++ show gid
+    callCommand $ runcmd ++ " steam://nav/games/details/" ++ show gid --TODO move to typed-process
   where
     runcmd =
         if isWindows

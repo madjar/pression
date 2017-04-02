@@ -20,6 +20,9 @@ library
   exposed-modules:     Pression.Library
                      , Pression.Parser
                      , Pression.Config
+                     , Pression.SteamCmd
+                     , Pression.Types
+                     , Pression.FileSharing
   build-depends:       base >= 4.7 && < 5
                      , directory
                      , rex
@@ -33,6 +36,11 @@ library
                      , process
                      , filepath
                      , extra
+                     , typed-process
+                     , bytestring
+                     , conduit-combinators
+                     , binary-conduit
+                     , binary
   default-language:    Haskell2010
 
 executable pression

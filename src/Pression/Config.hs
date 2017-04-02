@@ -31,10 +31,7 @@ steamDir = unsafePerformIO getSteamDir
 
 getConfig :: IO (Tagged ConfigVdf Value)
 getConfig =
-  Tagged . fromJust <$>
-  parseFromFile
-    steamConfigParser
-    (steamDir </> "config/config.vdf")
+  Tagged <$> parseSteamFile (steamDir </> "config/config.vdf")
 
 configInstallFolders :: Tagged ConfigVdf Value -> [String]
 configInstallFolders config =
