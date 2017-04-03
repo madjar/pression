@@ -41,6 +41,10 @@ library
                      , conduit-combinators
                      , binary-conduit
                      , binary
+                     , conduit-extra
+                     , streaming-commons
+                     , network-multicast
+                     , network
   default-language:    Haskell2010
 
 executable pression

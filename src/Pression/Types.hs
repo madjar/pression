@@ -1,3 +1,6 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Pression.Types where
 
-newtype GameId = GameId Integer deriving Show
+import Data.Binary
+
+newtype GameId = GameId Integer deriving (Show, Binary)

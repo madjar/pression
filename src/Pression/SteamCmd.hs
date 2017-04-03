@@ -16,7 +16,6 @@ import System.Directory
 import System.FilePath ((</>))
 
 
-
 downloadGame :: FilePath -> GameId -> IO ()
 downloadGame root (GameId game) = do
   let destination = root </> show game
