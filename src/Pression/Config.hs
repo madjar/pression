@@ -27,6 +27,7 @@ getSteamDir
     return (home </> ".steam/steam")
 
 steamDir :: String
+{-# NOINLINE steamDir #-}
 steamDir = unsafePerformIO getSteamDir
 
 getConfig :: IO (Tagged ConfigVdf Value)
