@@ -40,7 +40,6 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- rex-0.5.2
 - hsqml-0.3.4.1
 - fmt-0.2.0.0
 

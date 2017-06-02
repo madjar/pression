@@ -1,5 +1,4 @@
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}
 module Pression.Library
   ( steamappsDirs, gamesInDir, allGames, GameId(..), runGame, randomGame
   ) where
@@ -13,7 +12,8 @@ import System.Directory (listDirectory)
 import System.FilePath ((</>))
 import System.Info.Extra (isWindows)
 import System.Process (callCommand)
-import Text.Regex.PCRE.Rex (rex)
+import Text.Regex.TDFA ((=~~), mrSubs)
+import Data.Array ((!))
 
 
 steamappsDirs :: IO [String]
@@ -24,7 +24,9 @@ steamappsDirs = do
 
 gamesInDir :: FilePath -> IO [InstalledGame]
 gamesInDir dir = map (InstalledGame dir) . mapMaybe matchManifest <$> listDirectory dir
-    where matchManifest = [rex|^appmanifest_(?{ read }[0-9]+).acf$|]
+    where matchManifest :: String -> Maybe Integer
+          matchManifest file = do result <- file =~~ "appmanifest_([0-9]+).acf"
+                                  return $ read (mrSubs result ! 1)
 
 allGames :: IO [InstalledGame]
 allGames = do
