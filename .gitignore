@@ -17,6 +17,8 @@ cabal.sandbox.config
 *.eventlog
 .stack-work/
 
+pression.cabal
+
 # =========================
 # Operating System Files
 # =========================
