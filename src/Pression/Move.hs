@@ -20,7 +20,6 @@ import System.IO.Unsafe (unsafePerformIO)
 import Data.LruCache.IO (newLruHandle, cached, LruHandle)
 import Data.List (sortOn)
 
--- TODO from might not be necessary : search for the game in the path?
 moveGame :: InstalledGame -> FilePath -> IO ()
 moveGame (InstalledGame from game) dest = do
   -- TODO check that steam is not running
@@ -32,6 +31,8 @@ moveGame (InstalledGame from game) dest = do
   availSpace <- getAvailSpace dest
   when (availSpace < sizeOnDisk)
     (fail $ "No enough space left on "#|dest|#" ("#|availSpace|#" available, needs "#|sizeOnDisk|#")")
+
+  fmtLn ("Moving"#||game||#"to"#|dest|#".")
 
   createDirectoryIfMissing False (dest </> "common")
   renameDirectory (from </> "common" </> installDir) (dest </> "common" </> installDir)
@@ -87,4 +88,3 @@ shuffleAround hot cold hotDesiredFreeSpace = do
 
   traverse_ (\g -> moveGame g cold) freeze
   traverse_ (\g -> moveGame g hot) reheat
-

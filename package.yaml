@@ -65,6 +65,18 @@ executables:
     dependencies:
     - base
     - pression
+  pression-shuffle:
+    main: Shuffle.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - base
+    - pression
+    - fmt
 tests:
   pression-test:
     main: Spec.hs
