@@ -1,13 +1,13 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, ViewPatterns #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}
 module Pression.Library
-  ( gamesIds, GameId(..), runGame, randomGame
+  ( steamappsDirs, gamesInDir, allGames, GameId(..), runGame, randomGame
   ) where
 
 import Pression.Types
 import Pression.Config
 
 import Control.Monad.Random (uniform)
-import Data.Array ((!))
 import Data.Maybe (mapMaybe)
 import System.Directory (listDirectory)
 import System.FilePath ((</>))
@@ -15,18 +15,24 @@ import System.Info.Extra (isWindows)
 import System.Process (callCommand)
 import Text.Regex.PCRE.Rex (rex)
 
-gamesIds :: IO [GameId]
-gamesIds = do
-    config <- getConfig
-    let base = steamDir </> "steamapps"
-        folders = base : configInstallFolders config
-    concat <$> traverse gamesIdsInPath folders
-  where
-    gamesIdsInPath path = mapMaybe matchManifest <$> listDirectory path
-    matchManifest = [rex|^appmanifest_(?{ GameId . read }[0-9]+).acf$|]
+
+steamappsDirs :: IO [String]
+steamappsDirs = do
+  config <- getConfig
+  return $ map (</> "steamapps") (steamDir : configInstallFolders config)
+
+
+gamesInDir :: FilePath -> IO [InstalledGame]
+gamesInDir dir = map (InstalledGame dir) . mapMaybe matchManifest <$> listDirectory dir
+    where matchManifest = [rex|^appmanifest_(?{ read }[0-9]+).acf$|]
+
+allGames :: IO [InstalledGame]
+allGames = do
+    folders <- steamappsDirs
+    concat <$> traverse gamesInDir folders
 
 randomGame :: IO GameId
-randomGame = uniform =<< gamesIds
+randomGame = gameId <$> (uniform =<< allGames)
 
 runGame :: GameId -> IO ()
 runGame (GameId gid) =

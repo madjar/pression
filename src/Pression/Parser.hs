@@ -11,6 +11,7 @@ import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
 import Data.Text (Text)
 import Text.Trifecta
 import Data.Monoid ((<>))
+import Data.String.Conv (toS)
 
 data Value
   = String Text
@@ -30,10 +31,13 @@ parseSteamFile fp = do
 steamConfigParser :: Parser Value
 steamConfigParser = Object . InsOrd.fromList <$> many entry
   where
-    entry = (,) <$> key <*> value
-    key = stringLiteral <?> "key"
-    value = (String <$> stringLiteral) <|> braces steamConfigParser
+    entry = (,) <$> objectKey <*> objectValue
+    objectKey = stringLiteral <?> "key"
+    objectValue = String . toS <$> dummyStringLiteral <|> braces steamConfigParser
 
+dummyStringLiteral :: TokenParsing m => m String
+dummyStringLiteral = token $ between (char '"') (char '"') (many strChar)
+  where strChar = '"' <$ text "\\\"" <|> notChar '"'
 
 key :: Text -> Traversal' Value Value
 key i = _Object . ix i

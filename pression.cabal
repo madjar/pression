@@ -24,6 +24,7 @@ library
                      , Pression.SteamCmd
                      , Pression.Types
                      , Pression.FileSharing
+                     , Pression.Move
   build-depends:       base >= 4.7 && < 5
                      , directory
                      , rex
@@ -46,6 +47,11 @@ library
                      , streaming-commons
                      , network-multicast
                      , network
+                     , disk-free-space
+                     , fmt
+                     , string-conv
+                     , time
+                     , lrucaching
   default-language:    Haskell2010
 
 executable pression
