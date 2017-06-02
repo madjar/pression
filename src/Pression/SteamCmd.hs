@@ -2,16 +2,9 @@
 module Pression.SteamCmd where
 
 import Pression.Types
-import Pression.Parser
 
-import Control.Monad
 import Data.Monoid
 import System.Process.Typed
-import System.IO
-import Data.List
-import qualified Data.ByteString as B
-import Data.ByteString.Lazy.Internal (defaultChunkSize)
-import Control.Concurrent
 import System.Directory
 import System.FilePath ((</>))
 

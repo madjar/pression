@@ -5,11 +5,8 @@ module Main where
 import Pression.Library
 
 import Graphics.QML
-import Data.Text (Text)
 import qualified Data.Text as T
 import Data.IORef
-import Data.Typeable
-import Data.Proxy
 
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.Writer
@@ -36,6 +33,7 @@ data Property a = Property (IORef a) (SignalKey (IO ()))
 mkClass :: MkClass a -> IO [Member ()]
 mkClass = execWriterT . extractMkClass
 
+runBody :: MethodBody a -> ObjRef () -> IO a
 runBody = runReaderT . extractMethodBody
 
 -- | Create a new property with a given name and default value. This also takes

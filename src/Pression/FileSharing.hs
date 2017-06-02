@@ -89,7 +89,7 @@ steamServerAnnounce root port = do
   let loop = do
         games <- listDirectory root
         let msg = (port, games) :: (Int, [String])
-        sendTo sock (toStrict $ encode (port, games)) addr
+        _ <- sendTo sock (toStrict $ encode msg) addr
         threadDelay 1000000
         loop
   loop
