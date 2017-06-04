@@ -39,24 +39,28 @@ library:
   - string-conv
   - time
   - lrucaching
+  - path
+  - path-io
 executables:
-  pression-qml:
-    main: Qml.hs
-    source-dirs: app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -Wall
-    dependencies:
-    - base
-    - pression
-    - hsqml
-    - text
-    - transformers >=0.5
+    pression-qml:
+      main: Qml.hs
+      source-dirs: app
+      other-modules: []
+      ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      - -Wall
+      dependencies:
+      - base
+      - pression
+      - hsqml
+      - text
+      - transformers >=0.5
   pression-random:
     main: Random.hs
     source-dirs: app
+    other-modules: []
     ghc-options:
     - -threaded
     - -rtsopts
@@ -68,6 +72,7 @@ executables:
   pression-shuffle:
     main: Shuffle.hs
     source-dirs: app
+    other-modules: []
     ghc-options:
     - -threaded
     - -rtsopts
