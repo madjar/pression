@@ -42,5 +42,5 @@ runGame (GameId gid) =
   where
     runcmd =
         if isWindows
-            then "open"
+            then "start"
             else "steam"
