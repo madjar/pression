@@ -10,7 +10,7 @@ import Pression.Library
 import Control.Lens ((^?!), (^?), to, failing)
 import System.FilePath ((</>), (<.>))
 import System.DiskSpace (getAvailSpace)
-import System.Directory (createDirectoryIfMissing)
+import System.Directory (createDirectoryIfMissing, listDirectory)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.String.Conv (toS)
 import Control.Monad
@@ -51,8 +51,6 @@ moveGame g@(InstalledGame from game) dest = do
   removeDirRecur fromDir
   removeFile fromManifest
 
-user :: String
-user = "36588102"
 
 -- TODO Make that cache nicer
 {-# NOINLINE steamCache #-}
@@ -64,17 +62,23 @@ parseSteamFile' path = cached steamCache path (parseSteamFile path)
 
 getLastPlayed :: GameId -> IO (Maybe Integer)
 getLastPlayed (GameId gid) = do
-  localconfig <-
-    parseSteamFile'
-      (steamDir </> "userdata" </> user </> "config/localconfig.vdf")
-  return
-    (read . toS <$> localconfig ^? key "UserLocalConfigStore" . key "Software" .
-     key "Valve" .
-     key "Steam" .
-     failing (key "apps") (key "Apps") . -- This seems to be different on windows and mac
-     key (toS $ show gid) .
-     key "LastPlayed" .
-     _String)
+  users <- listDirectory (steamDir </> "userdata")
+  playTimes <- mapM lastPlayedFor users
+  return (maximum playTimes)
+  where
+    lastPlayedFor user = do
+      localconfig <-
+        parseSteamFile'
+          (steamDir </> "userdata" </> user </> "config/localconfig.vdf")
+      return
+        (read . toS <$> localconfig ^? key "UserLocalConfigStore" .
+         key "Software" .
+         key "Valve" .
+         key "Steam" .
+         failing (key "apps") (key "Apps") . -- This seems to be different on windows and mac
+         key (toS $ show gid) .
+         key "LastPlayed" .
+         _String)
 
 playedRecently :: GameId -> IO Bool
 playedRecently g = do
