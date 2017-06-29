@@ -7,7 +7,7 @@ import Pression.Parser
 import Pression.Config
 import Pression.Library
 
-import Control.Lens ((^?!), (^?), to)
+import Control.Lens ((^?!), (^?), to, failing)
 import System.FilePath ((</>), (<.>))
 import System.DiskSpace (getAvailSpace)
 import System.Directory (createDirectoryIfMissing)
@@ -64,8 +64,17 @@ parseSteamFile' path = cached steamCache path (parseSteamFile path)
 
 getLastPlayed :: GameId -> IO (Maybe Integer)
 getLastPlayed (GameId gid) = do
-  localconfig <- parseSteamFile' (steamDir </> "userdata" </> user </> "config/localconfig.vdf")
-  return (read . toS <$> localconfig ^? key "UserLocalConfigStore" . key "Software" . key "Valve" . key "Steam" . key "apps" . key (toS $ show gid) . key "LastPlayed" . _String)
+  localconfig <-
+    parseSteamFile'
+      (steamDir </> "userdata" </> user </> "config/localconfig.vdf")
+  return
+    (read . toS <$> localconfig ^? key "UserLocalConfigStore" . key "Software" .
+     key "Valve" .
+     key "Steam" .
+     failing (key "apps") (key "Apps") . -- This seems to be different on windows and mac
+     key (toS $ show gid) .
+     key "LastPlayed" .
+     _String)
 
 playedRecently :: GameId -> IO Bool
 playedRecently g = do
