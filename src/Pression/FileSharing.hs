@@ -14,7 +14,6 @@ import System.IO             (IOMode (ReadMode), hFileSize, openBinaryFile, hClo
 import Data.ByteString (ByteString)
 import qualified Data.Text as T
 import Control.Lens
-import Data.Monoid
 import Data.List
 import Data.Conduit.Network
 import Network.Multicast
@@ -25,20 +24,20 @@ import Data.ByteString.Lazy (toStrict, fromStrict)
 import Control.Concurrent (threadDelay)
 
 sendFile ::
-  MonadResource m => FilePath -> Producer m ByteString
+  MonadResource m => FilePath -> ConduitT i ByteString m ()
 sendFile fp = do
   bracketP (openBinaryFile fp ReadMode) hClose $ \h -> do
     size <- liftIO $ hFileSize h
     sourcePut (put (fromInteger size :: Int))
     sourceHandle h
 
-sendFileAs :: MonadResource m => FilePath -> FilePath -> Producer m ByteString
+sendFileAs :: MonadResource m => FilePath -> FilePath -> ConduitT i ByteString m ()
 sendFileAs fp name = do
   sourcePut (put name)
   sendFile fp
 
 sendGame ::
-  MonadResource m => FilePath -> GameId -> Producer m ByteString
+  MonadResource m => FilePath -> GameId -> ConduitT i ByteString m ()
 sendGame root (GameId game) = do
   let gameDir = root </> show game
       manifestRelPath = "steamapps" </> "appmanifest_" <> show game <> ".acf"
@@ -60,7 +59,7 @@ sendGame root (GameId game) = do
 
 
 recvFile ::
-  (MonadResource m, MonadThrow m) => FilePath -> Consumer ByteString m ()
+  (MonadResource m, MonadThrow m) => FilePath -> ConduitT ByteString o m ()
 recvFile root = do
   fpRel <- sinkGet get
   let fp = root </> fpRel
@@ -70,7 +69,7 @@ recvFile root = do
   takeCE fileLen .| sinkFile fp
 
 recvTree ::
-  (MonadResource m, MonadThrow m) => FilePath -> Consumer ByteString m ()
+  (MonadResource m, MonadThrow m) => FilePath -> ConduitT ByteString o m ()
 recvTree root = peekForeverE (recvFile root)
 
 steamFileServer :: FilePath -> Int -> IO a
