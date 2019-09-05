@@ -60,7 +60,7 @@ sendGame root (GameId game) = do
 
 
 recvFile ::
-  MonadResource m => FilePath -> Consumer ByteString m ()
+  (MonadResource m, MonadThrow m) => FilePath -> Consumer ByteString m ()
 recvFile root = do
   fpRel <- sinkGet get
   let fp = root </> fpRel
@@ -70,7 +70,7 @@ recvFile root = do
   takeCE fileLen .| sinkFile fp
 
 recvTree ::
-  MonadResource m => FilePath -> Consumer ByteString m ()
+  (MonadResource m, MonadThrow m) => FilePath -> Consumer ByteString m ()
 recvTree root = peekForeverE (recvFile root)
 
 steamFileServer :: FilePath -> Int -> IO a

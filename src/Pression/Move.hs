@@ -32,12 +32,12 @@ moveGame g@(InstalledGame from game) dest = do
 
   availSpace <- getAvailSpace dest
   when (availSpace < sizeOnDisk)
-    (fail $ "No enough space left on "#|dest|#" ("#|availSpace|#" available, needs "#|sizeOnDisk|#")")
+    (fail $ "No enough space left on "+|dest|+" ("+|availSpace|+" available, needs "+|sizeOnDisk|+")")
 
   name <- gameName g
   size <- getSizeOnDisk g
   let sizeInGig = (fromInteger size) / 1024 / 1024 / 1024 :: Double
-  fmtLn ("Moving "#||name||#" to "#|dest|#" ("#|| sizeInGig ||#" GB).")
+  fmtLn ("Moving "+||name||+" to "+|dest|+" ("+|| sizeInGig ||+" GB).")
 
   createDirectoryIfMissing False (dest </> "common")
 
