@@ -1,25 +1,41 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Pression.SteamCmd where
 
+import Data.String.Conv
+import Pression.Parser
 import Pression.Types
-
-import Data.Monoid
-import System.Process.Typed
 import System.Directory
 import System.FilePath ((</>))
-
+import System.Process.Typed
 
 downloadGame :: FilePath -> GameId -> IO ()
 downloadGame root (GameId game) = do
   let destination = root </> show game
       instructions =
-        [ "+@ShutdownOnFailedCommand 1"
-        , "+@NoPromptForPassword 1"
-        , "+@sSteamCmdForcePlatformType windows"
-        , "+login georgesmadjar"
-        , "+force_install_dir " <> destination
-        , "+app_update " <> show game <> " validate"
-        , "+quit"
+        [ "+login georgesmadjar",
+          "+force_install_dir " <> destination,
+          "+app_update " <> show game <> " validate"
         ]
   createDirectoryIfMissing True destination
-  runProcess_ (proc "steamcmd" instructions)
+  runProcess_ (steamcmdProc instructions)
+
+appInfo :: GameId -> IO ()
+appInfo (GameId i) = do
+  runProcess_ (steamcmdProc ["+app_info_print " <> show i])
+
+
+steamcmd :: [String] -> IO ()
+steamcmd args =
+  runProcess_ (steamcmdProc args)
+
+steamcmdProc args =
+  proc
+    "steamcmd"
+    ( [ "+@ShutdownOnFailedCommand 1",
+        "+@NoPromptForPassword 1",
+        "+@sSteamCmdForcePlatformType windows"
+      ]
+        <> args
+        <> ["+quit"]
+    )
