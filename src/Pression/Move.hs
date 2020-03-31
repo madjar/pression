@@ -1,14 +1,17 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module Pression.Move where
 
 import Control.Lens ((^?), (^?!), failing, to)
 import Control.Monad
 import Data.Foldable
-import Data.List (sortOn)
+import Data.List (sortBy)
 import Data.LruCache.IO (LruHandle, cached, newLruHandle)
+import Data.Ord (comparing)
 import Data.String.Conv (toS)
+import Data.Text (Text)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Fmt
 import Path (parseAbsDir, parseAbsFile)
@@ -92,9 +95,13 @@ getSizeOnDisk g = do
   manifest <- parseSteamFile' (libraryDir g </> manifestPath g)
   return (manifest ^?! key "AppState" . key "SizeOnDisk" . _String . to (read . toS))
 
+gameName :: InstalledGame -> IO Text
 gameName g = do
   manifest <- parseSteamFile' (libraryDir g </> manifestPath g)
   return (manifest ^?! key "AppState" . key "name" . _String)
+
+sortOnM :: (Monad m, Ord b) => (a -> m b) -> [a] -> m [a]
+sortOnM f = fmap (map snd . sortBy (comparing fst)) . traverse (\x -> do y <- f x; return (y, x))
 
 gamesToShuffleAround :: FilePath -> FilePath -> Integer -> IO ([InstalledGame], [InstalledGame])
 gamesToShuffleAround hot cold hotDesiredFreeSpace = do
@@ -102,15 +109,11 @@ gamesToShuffleAround hot cold hotDesiredFreeSpace = do
   sizeOfReheat <- sum <$> traverse getSizeOnDisk reheat
   availSpaceOnHot <- getAvailSpace hot
   let sizeToFree = max 0 (sizeOfReheat + hotDesiredFreeSpace - availSpaceOnHot)
-  let addSizeAndLastPlayed g = do
-        size <- getSizeOnDisk g
-        lastPlayed <- getLastPlayed (gameId g)
-        return ((g, size), lastPlayed)
-  gamesAndSizeAndLastPlayed <- traverse addSizeAndLastPlayed =<< gamesInDir hot
-  -- Don`t sort them by size, sort them by last played !
+  -- Don`t sort them by size, sort them by last played ! (most recently played at the end)
+  candidatesForFreezing <- sortOnM (getLastPlayed . gameId) =<< gamesInDir hot
+  candidatesForFreezingWithSize <- traverse (\g -> (g,) <$> getSizeOnDisk g) candidatesForFreezing
   let accum (!games, !size) (g, s) = (g : games, size + s)
-      candidatesForFreezing = map fst . sortOn snd $ gamesAndSizeAndLastPlayed
-      freeze = reverse . fst . head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezing
+      freeze = reverse . fst . head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezingWithSize
   return (reheat, freeze)
 
 shuffleAround :: FilePath -> FilePath -> Integer -> IO ()
