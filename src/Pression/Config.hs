@@ -2,15 +2,14 @@
 
 module Pression.Config where
 
-import           Pression.Parser
-
-import           Control.Lens
-import           Data.Tagged
+import Control.Lens
+import Data.Tagged
 import qualified Data.Text as T
-import           System.Directory (getHomeDirectory)
-import           System.FilePath ((</>))
-import           System.IO.Unsafe (unsafePerformIO)
-import           System.Info.Extra (isWindows, isMac)
+import Pression.Parser
+import System.Directory (getHomeDirectory)
+import System.FilePath ((</>))
+import System.IO.Unsafe (unsafePerformIO)
+import System.Info.Extra (isMac, isWindows)
 
 data ConfigVdf
 
@@ -34,10 +33,10 @@ getConfig =
 
 configInstallFolders :: Tagged ConfigVdf Value -> [String]
 configInstallFolders config =
-  untag config ^.. key "InstallConfigStore" . key "Software" . key "Valve" .
-  key "Steam" .
-  _Object .
-  itraversed .
-  indices ("BaseInstallFolder" `T.isPrefixOf`) .
-  _String .
-  to T.unpack
+  untag config ^.. key "InstallConfigStore" . key "Software" . key "Valve"
+    . key "Steam"
+    . _Object
+    . itraversed
+    . indices ("BaseInstallFolder" `T.isPrefixOf`)
+    . _String
+    . to T.unpack

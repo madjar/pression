@@ -24,7 +24,6 @@ appInfo :: GameId -> IO ()
 appInfo (GameId i) = do
   runProcess_ (steamcmdProc ["+app_info_print " <> show i])
 
-
 steamcmd :: [String] -> IO ()
 steamcmd args =
   runProcess_ (steamcmdProc args)

@@ -1,27 +1,26 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+
 module Pression.FileSharing where
 
-import Pression.Types
-import Pression.Parser
-
 import Conduit
-import Data.Conduit.Serialization.Binary
-import Data.Binary
-import System.FilePath
-import System.Directory
-import System.IO             (IOMode (ReadMode), hFileSize, openBinaryFile, hClose)
-import Data.ByteString (ByteString)
-import qualified Data.Text as T
+import Control.Concurrent (threadDelay)
 import Control.Lens
-import Data.List
+import Data.Binary
+import Data.ByteString (ByteString)
+import Data.ByteString.Lazy (fromStrict, toStrict)
 import Data.Conduit.Network
+import Data.Conduit.Serialization.Binary
+import Data.List
+import qualified Data.Text as T
 import Network.Multicast
 import Network.Socket (SockAddr)
-import Network.Socket.ByteString (sendTo, recvFrom)
-import Data.ByteString.Lazy (toStrict, fromStrict)
-
-import Control.Concurrent (threadDelay)
+import Network.Socket.ByteString (recvFrom, sendTo)
+import Pression.Parser
+import Pression.Types
+import System.Directory
+import System.FilePath
+import System.IO (IOMode (ReadMode), hClose, hFileSize, openBinaryFile)
 
 sendFile ::
   MonadResource m => FilePath -> ConduitT i ByteString m ()
@@ -49,14 +48,14 @@ sendGame root (GameId game) = do
   -- Send the manifest
   sendFileAs manifestFile manifestRelPath
   -- Send the rest (but not the steamapps dir)
-  sourceDirectoryDeep False root .|
-    filterC (\fp -> not ("steamapps" `isPrefixOf` fp)) .|
-    awaitForever
-      (\fp ->
-         sendFileAs
-           fp
-           ("steamapps" </> "common" </> installdir </> makeRelative gameDir fp))
-
+  sourceDirectoryDeep False root
+    .| filterC (\fp -> not ("steamapps" `isPrefixOf` fp))
+    .| awaitForever
+      ( \fp ->
+          sendFileAs
+            fp
+            ("steamapps" </> "common" </> installdir </> makeRelative gameDir fp)
+      )
 
 recvFile ::
   (MonadResource m, MonadThrow m) => FilePath -> ConduitT ByteString o m ()
@@ -64,7 +63,6 @@ recvFile root = do
   fpRel <- sinkGet get
   let fp = root </> fpRel
   liftIO $ createDirectoryIfMissing True $ takeDirectory fp
-
   fileLen <- sinkGet get
   takeCE fileLen .| sinkFile fp
 
@@ -93,7 +91,6 @@ steamServerAnnounce root port = do
         loop
   loop
 
-
 discoverSteamServer :: IO (SockAddr, Int, [String])
 discoverSteamServer = do
   sock <- multicastReceiver "224.0.0.99" 9999
@@ -109,5 +106,4 @@ steamFileClient root server port game =
     runConduitRes $ appSource appData .| recvTree root
   where
     settings = clientSettings port server
-
 --TODO don't forget withSocketsDo
