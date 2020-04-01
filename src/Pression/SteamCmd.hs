@@ -2,8 +2,6 @@
 
 module Pression.SteamCmd where
 
-import Data.String.Conv
-import Pression.Parser
 import Pression.Types
 import System.Directory
 import System.FilePath ((</>))
@@ -28,6 +26,7 @@ steamcmd :: [String] -> IO ()
 steamcmd args =
   runProcess_ (steamcmdProc args)
 
+steamcmdProc :: [String] -> ProcessConfig () () ()
 steamcmdProc args =
   proc
     "steamcmd"
