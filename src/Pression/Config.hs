@@ -33,7 +33,7 @@ getConfig =
 
 configInstallFolders :: Tagged ConfigVdf Value -> [String]
 configInstallFolders config =
-  untag config ^.. key "InstallConfigStore" . key "Software" . key "Valve"
+  untag config ^.. key "InstallConfigStore" . key "Software" . key "valve"
     . key "Steam"
     . _Object
     . itraversed
