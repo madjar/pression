@@ -72,7 +72,7 @@ getLastPlayed (GameId gid) = do
       return
         ( read . toS <$> localconfig ^? key "UserLocalConfigStore"
             . key "Software"
-            . key "Valve"
+            . failing (key "valve") (key "Valve")
             . key "Steam"
             . failing (key "apps") (key "Apps")
             . key (toS $ show gid) -- This seems to be different on windows and mac
