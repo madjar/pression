@@ -4,7 +4,6 @@
 
 module Pression.Parser where
 
-import Control.Applicative
 import Control.Lens
 import Data.ByteString (ByteString)
 import qualified Data.HashMap.Strict.InsOrd as InsOrd

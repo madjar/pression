@@ -3,15 +3,13 @@
 
 module Pression.FileSharing where
 
+import Prelude hiding (put, get)
 import Conduit
 import Control.Concurrent (threadDelay)
 import Control.Lens
 import Data.Binary
-import Data.ByteString (ByteString)
-import Data.ByteString.Lazy (fromStrict, toStrict)
 import Data.Conduit.Network
 import Data.Conduit.Serialization.Binary
-import Data.List
 import qualified Data.Text as T
 import Network.Multicast
 import Network.Socket (SockAddr)

@@ -5,10 +5,8 @@
 
 module Pression.Move where
 
-import Control.Lens ((^?), (^?!), failing, to)
-import Control.Monad
-import Data.Foldable
-import Data.List (sortBy)
+import Control.Lens ((^?), (^?!), failing, to, folding)
+import Data.List (sortBy, maximum)
 import Data.LruCache.IO (LruHandle, cached, newLruHandle)
 import Data.Ord (comparing)
 import Data.String.Conv (toS)
@@ -25,6 +23,7 @@ import System.Directory (createDirectoryIfMissing, listDirectory)
 import System.DiskSpace (getAvailSpace)
 import System.FilePath ((<.>), (</>))
 import System.IO.Unsafe (unsafePerformIO)
+import qualified Relude.Unsafe as Unsafe
 
 moveGame :: InstalledGame -> FilePath -> IO ()
 moveGame g@(InstalledGame from game) dest = do
@@ -32,7 +31,7 @@ moveGame g@(InstalledGame from game) dest = do
   let manifestName = "appmanifest_" ++ show game <.> "acf"
   manifest <- parseSteamFile' (from </> manifestName)
   let installDir = manifest ^?! key "AppState" . key "installdir" . _String . to toS
-      sizeOnDisk = manifest ^?! key "AppState" . key "SizeOnDisk" . _String . to (read . toS)
+      sizeOnDisk = manifest ^?! key "AppState" . key "SizeOnDisk" . _String . folding (readMaybe . toS)
   availSpace <- getAvailSpace dest
   when
     (availSpace < sizeOnDisk)
@@ -71,14 +70,16 @@ getLastPlayed (GameId gid) = do
         parseSteamFile'
           (steamDir </> "userdata" </> user </> "config/localconfig.vdf")
       return
-        ( read . toS <$> localconfig ^? key "UserLocalConfigStore"
+        ( localconfig ^? key "UserLocalConfigStore"
             . key "Software"
             . failing (key "valve") (key "Valve")
             . key "Steam"
             . failing (key "apps") (key "Apps")
-            . key (toS $ show gid) -- This seems to be different on windows and mac
+            . key (show gid) -- This seems to be different on windows and mac
             . key "LastPlayed"
             . _String
+            . to toS
+            . folding readMaybe
         )
 
 playedRecently :: GameId -> IO Bool
@@ -94,7 +95,7 @@ playedRecently g = do
 getSizeOnDisk :: InstalledGame -> IO Integer
 getSizeOnDisk g = do
   manifest <- parseSteamFile' (libraryDir g </> manifestPath g)
-  return (manifest ^?! key "AppState" . key "SizeOnDisk" . _String . to (read . toS))
+  return (manifest ^?! key "AppState" . key "SizeOnDisk" . _String . folding (readMaybe . toS))
 
 gameName :: InstalledGame -> IO Text
 gameName g = do
@@ -116,7 +117,7 @@ gamesToShuffleAround hot cold hotDesiredFreeSpace = do
   candidatesForFreezing <- sortOnM (getLastPlayed . gameId) =<< gamesInDir hot
   candidatesForFreezingWithSize <- traverse (\g -> (g,) <$> getSizeOnDisk g) candidatesForFreezing
   let accum (!games, !size) (g, s) = (g : games, size + s)
-      freeze = reverse . fst . head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezingWithSize
+      freeze = reverse . fst . Unsafe.head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezingWithSize
   return ShuffleResult {..}
 
 printShuffleResult :: ShuffleResult -> IO ()

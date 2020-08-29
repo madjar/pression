@@ -32,7 +32,7 @@ gamesInDir dir = map (InstalledGame dir) . mapMaybe matchManifest <$> listDirect
     matchManifest :: String -> Maybe Integer
     matchManifest file = do
       result <- file =~~ "appmanifest_([0-9]+).acf"
-      return $ read (mrSubs result ! 1)
+      readMaybe (mrSubs result ! 1)
 
 allGames :: IO [InstalledGame]
 allGames = do
