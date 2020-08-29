@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 module Pression.Library
   ( steamappsDirs,
     gamesInDir,
@@ -12,7 +10,6 @@ where
 
 import Control.Monad.Random (uniform)
 import Data.Array ((!))
-import Data.Maybe (mapMaybe)
 import Pression.Config
 import Pression.Types
 import System.Directory (listDirectory)

@@ -19,7 +19,7 @@ downloadGame root (GameId game) = do
   runProcess_ (steamcmdProc instructions)
 
 appInfo :: GameId -> IO ()
-appInfo (GameId i) = do
+appInfo (GameId i) =
   runProcess_ (steamcmdProc ["+app_info_print " <> show i])
 
 steamcmd :: [String] -> IO ()

@@ -16,7 +16,7 @@ library:
     version: ">=4.7 && <5"
     mixin: hiding (Prelude)
   - name: relude
-    mixin: (Relude as Prelude, Relude.Unsafe)
+    mixin: (Relude as Prelude, Relude.Unsafe, Relude.Extra.Tuple)
   - directory
   - regex-tdfa
   - array
@@ -69,7 +69,10 @@ executables:
     - -with-rtsopts=-N
     - -Wall
     dependencies:
-    - base
+    - name: base
+      mixin: hiding (Prelude)
+    - name: relude
+      mixin: (Relude as Prelude)
     - pression
     - fmt
 tests:

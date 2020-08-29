@@ -7,7 +7,6 @@ import Fmt
 import Pression.Library
 import Pression.Move
 import System.Environment (getArgs)
-import Control.Monad (when)
 
 freeSize :: Integer
 freeSize = 100 * 1024 * 1024 * 1024
@@ -21,6 +20,6 @@ main =
       shuffleResult <- gamesToShuffleAround hotPath coldPath freeSize
       printShuffleResult shuffleResult
       args <- getArgs
-      when ("--dry-run" `notElem` args) $ do
-        shuffleAround shuffleResult
+      when ("--dry-run" `notElem` args)
+        (shuffleAround shuffleResult)
     _ -> fmtLn "Error, could not find two steam libraries"

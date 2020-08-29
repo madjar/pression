@@ -10,7 +10,6 @@ import Control.Lens
 import Data.Binary
 import Data.Conduit.Network
 import Data.Conduit.Serialization.Binary
-import qualified Data.Text as T
 import Network.Multicast
 import Network.Socket (SockAddr)
 import Network.Socket.ByteString (recvFrom, sendTo)
@@ -22,7 +21,7 @@ import System.IO (IOMode (ReadMode), hClose, hFileSize, openBinaryFile)
 
 sendFile ::
   MonadResource m => FilePath -> ConduitT i ByteString m ()
-sendFile fp = do
+sendFile fp =
   bracketP (openBinaryFile fp ReadMode) hClose $ \h -> do
     size <- liftIO $ hFileSize h
     sourcePut (put (fromInteger size :: Int))
@@ -42,7 +41,7 @@ sendGame root (GameId game) = do
   -- Read the manifest to find out the install dir
   manifest <- liftIO $ parseSteamFile manifestFile
   let installdir =
-        manifest ^. key "AppState" . key "installdir" . _String . to T.unpack
+        manifest ^. key "AppState" . key "installdir" . _String . to toString
   -- Send the manifest
   sendFileAs manifestFile manifestRelPath
   -- Send the rest (but not the steamapps dir)

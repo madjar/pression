@@ -1,14 +1,12 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Pression.Move where
 
 import Control.Lens ((^?), (^?!), failing, to, folding)
-import Data.List (sortBy, maximum)
+import Data.List (maximum)
 import Data.LruCache.IO (LruHandle, cached, newLruHandle)
-import Data.Ord (comparing)
 import Data.String.Conv (toS)
 import Data.Text (Text)
 import Data.Time.Clock.POSIX (getPOSIXTime)
@@ -24,6 +22,7 @@ import System.DiskSpace (getAvailSpace)
 import System.FilePath ((<.>), (</>))
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Relude.Unsafe as Unsafe
+import Relude.Extra.Tuple
 
 moveGame :: InstalledGame -> FilePath -> IO ()
 moveGame g@(InstalledGame from game) dest = do
@@ -38,7 +37,7 @@ moveGame g@(InstalledGame from game) dest = do
     (fail $ "No enough space left on " +| dest |+ " (" +| availSpace |+ " available, needs " +| sizeOnDisk |+ ")")
   name <- gameName g
   size <- getSizeOnDisk g
-  let sizeInGig = (fromInteger size) / 1024 / 1024 / 1024 :: Double
+  let sizeInGig = fromInteger size / 1024 / 1024 / 1024 :: Double
   fmtLn ("Moving " +|| name ||+ " to " +| dest |+ " (" +|| sizeInGig ||+ " GB).")
   createDirectoryIfMissing False (dest </> "common")
   -- No recurive copy in base, so using the one from path0-io
@@ -88,7 +87,7 @@ playedRecently g = do
   case mlastPlayed of
     Just lastPlayed -> do
       now <- round <$> getPOSIXTime
-      let aMonthAgo = now - (60 * 60 * 24 * 30 * 1)
+      let aMonthAgo = now - (60 * 60 * 24 * 30)
       return (lastPlayed >= aMonthAgo)
     Nothing -> return False
 
@@ -103,7 +102,7 @@ gameName g = do
   return (manifest ^?! key "AppState" . key "name" . _String)
 
 sortOnM :: (Monad m, Ord b) => (a -> m b) -> [a] -> m [a]
-sortOnM f = fmap (map snd . sortBy (comparing fst)) . traverse (\x -> do y <- f x; return (y, x))
+sortOnM f = fmap (map snd . sortWith fst) . traverse (\x -> do y <- f x; return (y, x))
 
 data ShuffleResult = ShuffleResult {hot :: FilePath, cold :: FilePath, reheat :: [InstalledGame], freeze :: [InstalledGame]}
 
@@ -115,7 +114,7 @@ gamesToShuffleAround hot cold hotDesiredFreeSpace = do
   let sizeToFree = max 0 (sizeOfReheat + hotDesiredFreeSpace - availSpaceOnHot)
   -- Don`t sort them by size, sort them by last played ! (most recently played at the end)
   candidatesForFreezing <- sortOnM (getLastPlayed . gameId) =<< gamesInDir hot
-  candidatesForFreezingWithSize <- traverse (\g -> (g,) <$> getSizeOnDisk g) candidatesForFreezing
+  candidatesForFreezingWithSize <- traverse (traverseToSnd getSizeOnDisk) candidatesForFreezing
   let accum (!games, !size) (g, s) = (g : games, size + s)
       freeze = reverse . fst . Unsafe.head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezingWithSize
   return ShuffleResult {..}
@@ -132,5 +131,5 @@ printShuffleResult ShuffleResult{..} = do
 
 shuffleAround :: ShuffleResult -> IO ()
 shuffleAround ShuffleResult{..} = do
-  traverse_ (\g -> moveGame g cold) freeze
-  traverse_ (\g -> moveGame g hot) reheat
+  traverse_ (`moveGame` cold) freeze
+  traverse_ (`moveGame` hot) reheat

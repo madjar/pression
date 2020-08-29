@@ -39,4 +39,4 @@ configInstallFolders config =
     . itraversed
     . indices ("BaseInstallFolder" `T.isPrefixOf`)
     . _String
-    . to T.unpack
+    . to toString
