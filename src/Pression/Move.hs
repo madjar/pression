@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Pression.Move where
 
@@ -103,7 +104,9 @@ gameName g = do
 sortOnM :: (Monad m, Ord b) => (a -> m b) -> [a] -> m [a]
 sortOnM f = fmap (map snd . sortBy (comparing fst)) . traverse (\x -> do y <- f x; return (y, x))
 
-gamesToShuffleAround :: FilePath -> FilePath -> Integer -> IO ([InstalledGame], [InstalledGame])
+data ShuffleResult = ShuffleResult {hot :: FilePath, cold :: FilePath, reheat :: [InstalledGame], freeze :: [InstalledGame]}
+
+gamesToShuffleAround :: FilePath -> FilePath -> Integer -> IO ShuffleResult
 gamesToShuffleAround hot cold hotDesiredFreeSpace = do
   reheat <- filterM (playedRecently . gameId) =<< gamesInDir cold
   sizeOfReheat <- sum <$> traverse getSizeOnDisk reheat
@@ -114,16 +117,19 @@ gamesToShuffleAround hot cold hotDesiredFreeSpace = do
   candidatesForFreezingWithSize <- traverse (\g -> (g,) <$> getSizeOnDisk g) candidatesForFreezing
   let accum (!games, !size) (g, s) = (g : games, size + s)
       freeze = reverse . fst . head . filter ((>= sizeToFree) . snd) . scanl accum ([], 0) $ candidatesForFreezingWithSize
-  return (reheat, freeze)
+  return ShuffleResult {..}
 
-shuffleAround :: FilePath -> FilePath -> Integer -> IO ()
-shuffleAround hot cold hotDesiredFreeSpace = do
-  (reheat, freeze) <- gamesToShuffleAround hot cold hotDesiredFreeSpace
+printShuffleResult :: ShuffleResult -> IO ()
+printShuffleResult ShuffleResult{..} = do
   let prettyGame g = (,) <$> gameName g <*> (getLastPlayed . gameId) g
   putStrLn "Reheat:"
   print =<< traverse prettyGame reheat
   putStrLn "Freeze:"
   print =<< traverse prettyGame freeze
   print . sum =<< traverse getSizeOnDisk freeze
+
+
+shuffleAround :: ShuffleResult -> IO ()
+shuffleAround ShuffleResult{..} = do
   traverse_ (\g -> moveGame g cold) freeze
   traverse_ (\g -> moveGame g hot) reheat
